@@ -30,6 +30,7 @@ export default function Header() {
             >
               Home
             </Link>
+ 
             <Link
               to="/scanner"
               className={`text-sm font-medium transition-colors ${
@@ -40,6 +41,7 @@ export default function Header() {
             >
               Scanner
             </Link>
+
             <Link
               to="/dashboard"
               className={`text-sm font-medium transition-colors ${
@@ -50,6 +52,7 @@ export default function Header() {
             >
               Dashboard
             </Link>
+
             <a
               href="https://github.com"
               target="_blank"
@@ -58,6 +61,7 @@ export default function Header() {
             >
               <Github className="h-5 w-5" />
             </a>
+            
           </nav>
 
           {/* Mobile menu button */}
