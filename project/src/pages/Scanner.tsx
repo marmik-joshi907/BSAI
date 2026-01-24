@@ -1,3 +1,4 @@
+const BACKEND_URL = "http://localhost:8000"; // added-by-me (kush)
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -29,75 +30,73 @@ export default function Scanner() {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  // updated by me (kush)
   const handleScan = async () => {
+  try {
     setIsScanning(true);
-    
-    // Simulate scanning process
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Mock scan results
-    const mockResults = {
-      totalFiles: scanMode === 'upload' ? uploadedFiles.length : 15,
-      vulnerabilities: [
-        {
-          id: '1',
-          type: 'SQL Injection',
-          severity: 'Critical' as const,
-          file: 'login.php',
-          line: 42,
-          description: 'Direct user input is passed to SQL query without sanitization',
-          code: `$query = "SELECT * FROM users WHERE username = '" . $_POST['username'] . "' AND password = '" . $_POST['password'] . "'";`,
-          suggestion: 'Use prepared statements to prevent SQL injection attacks',
-          fixedCode: `$stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND password = ?");
-$stmt->execute([$_POST['username'], hash('sha256', $_POST['password'])]);`
-        },
-        {
-          id: '2',
-          type: 'Cross-Site Scripting (XSS)',
-          severity: 'High' as const,
-          file: 'profile.html',
-          line: 28,
-          description: 'User input is displayed without proper encoding',
-          code: `<h2>Welcome, ${username}!</h2>`,
-          suggestion: 'Always encode user input before displaying in HTML',
-          fixedCode: `<h2>Welcome, <%= escapeHtml(username) %>!</h2>`
-        },
-        {
-          id: '3',
-          type: 'Hardcoded Secret',
-          severity: 'High' as const,
-          file: 'config.js',
-          line: 15,
-          description: 'API key is hardcoded in source code',
-          code: `const API_KEY = "sk-1234567890abcdef";`,
-          suggestion: 'Store secrets in environment variables',
-          fixedCode: `const API_KEY = process.env.API_KEY || '';`
-        },
-        {
-          id: '4',
-          type: 'Insecure Authentication',
-          severity: 'Medium' as const,
-          file: 'auth.py',
-          line: 67,
-          description: 'Password stored without proper hashing',
-          code: `user.password = request.form['password']`,
-          suggestion: 'Use bcrypt or similar to hash passwords',
-          fixedCode: `user.password = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())`
-        }
-      ],
-      summary: {
-        critical: 1,
-        high: 2,
-        medium: 1,
-        low: 0,
-        riskScore: 85
-      }
-    };
 
-    setScanResults(mockResults);
+    // -------- FILE UPLOAD MODE --------
+    if (scanMode === 'upload') {
+      const allResults = [];
+
+      for (const file of uploadedFiles) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(`${BACKEND_URL}/api/scan/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Scan failed");
+        }
+
+        const result = await response.json();
+        allResults.push(result);
+      }
+
+      // Normalize data for dashboard
+      const formattedResults = {
+        totalFiles: uploadedFiles.length,
+        vulnerabilities: allResults.flatMap((scan: any) =>
+          scan.issues.map((issue: any, index: number) => ({
+            id: `${scan._id}-${index}`,
+            type: issue.type,
+            severity: issue.severity,
+            file: scan.file_name,
+            line: issue.line,
+            description: issue.message,
+            code: issue.code,
+            suggestion: "Follow secure coding practices",
+            fixedCode: "Refer official documentation"
+          }))
+        ),
+        summary: {
+          critical: allResults.flatMap(s => s.issues).filter(i => i.severity === "High").length,
+          high: allResults.flatMap(s => s.issues).length,
+          medium: 0,
+          low: 0,
+          riskScore: 80
+        }
+      };
+
+      setScanResults(formattedResults);
+      navigate("/dashboard");
+    }
+
+    // -------- GITHUB MODE (placeholder) --------
+    if (scanMode === 'github') {
+      alert("GitHub scanning will be enabled in next phase");
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("Error during scanning");
+  } finally {
     setIsScanning(false);
-    navigate('/dashboard');
-  };
+  }
+};
 
   const supportedFormats = [
     { ext: '.html', icon: <FileText className="h-4 w-4" />, name: 'HTML' },

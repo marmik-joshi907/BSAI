@@ -7,7 +7,7 @@ import Dashboard from './pages/Dashboard';
 import { VulnerabilityProvider } from './context/VulnerabilityContext';
 
 function App() {
-  return (
+  return ( 
     <VulnerabilityProvider>
       <Router>
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
