@@ -1,23 +1,21 @@
 # regular expression based code scanner for security vulnerabilities
 import re
+from app.ml_model import predict_severity   # 🔹 ML IMPORT
 
 RULES = [
     {
         "type": "SQL Injection",
         "pattern": r"(SELECT|INSERT|UPDATE|DELETE).*['\"]",
-        "severity": "High",
         "message": "Possible SQL Injection detected"
     },
     {
         "type": "Cross-Site Scripting (XSS)",
         "pattern": r"<script.*?>.*?</script>",
-        "severity": "High",
         "message": "Possible XSS vulnerability detected"
     },
     {
         "type": "Hardcoded Secret",
         "pattern": r"(API_KEY|SECRET|PASSWORD)\s*=\s*['\"].+['\"]",
-        "severity": "Medium",
         "message": "Hardcoded sensitive data detected"
     }
 ]
@@ -29,9 +27,15 @@ def scan_code(code: str):
     for line_no, line in enumerate(lines, start=1):
         for rule in RULES:
             if re.search(rule["pattern"], line, re.IGNORECASE):
+
+                # 🔹 ML PREDICTS SEVERITY HERE
+                predicted_severity = predict_severity(
+                    f"{rule['type']} {line}"
+                )
+
                 issues.append({
                     "type": rule["type"],
-                    "severity": rule["severity"],
+                    "severity": predicted_severity,  # 🔥 ML USED
                     "line": line_no,
                     "message": rule["message"],
                     "code": line.strip()
