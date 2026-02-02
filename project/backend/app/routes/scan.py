@@ -7,7 +7,7 @@ router = APIRouter()
 
 @router.post("/scan/upload")
 async def upload_and_scan(file: UploadFile = File(...)):
-    allowed_ext = (".js", ".ts", ".jsx", ".py", ".php", ".html")
+    allowed_ext = (".js", ".ts", ".jsx", ".py", ".php", ".html",".tsx")
 
     filename = file.filename or ""
 

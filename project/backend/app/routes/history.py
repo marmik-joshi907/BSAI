@@ -1,24 +1,28 @@
-#  This file is for Scanning the History of scans 
-
-from fastapi import APIRouter
-from app.database import  scan_collection
-from fastapi import HTTPException
+from fastapi import APIRouter, HTTPException
 from bson import ObjectId
+from app.database import scan_collection
 
 router = APIRouter()
 
-@router.get("/history")
+#  1. STATIC ROUTE FIRST
+@router.get("/api/scans/history")
 def get_scan_history():
-    scans = []
-    for scan in scan_collection.find().sort("scan_date", -1):
+    scans = list(scan_collection.find().sort("scan_date", -1))
+
+    for scan in scans:
         scan["_id"] = str(scan["_id"])
-        scans.append(scan)
+
     return scans
 
 
-@router.get("/scans/{scan_id}")
+#  2. DYNAMIC ROUTE SECOND
+@router.get("/api/scans/{scan_id}")
 def get_scan_by_id(scan_id: str):
+    if not ObjectId.is_valid(scan_id):
+        raise HTTPException(status_code=400, detail="Invalid scan ID")
+
     scan = scan_collection.find_one({"_id": ObjectId(scan_id)})
+
     if not scan:
         raise HTTPException(status_code=404, detail="Scan not found")
 

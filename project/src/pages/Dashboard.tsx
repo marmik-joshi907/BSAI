@@ -42,7 +42,7 @@ export default function Dashboard() {
       .catch((err) => console.error(err));
   }, []);
 
-  // 🔹 Decide which scan to show (current OR history)
+  //  Decide which scan to show (current OR history)
   const activeScan = scanResults || selectedScan;
 
   if (!activeScan) {
@@ -98,6 +98,7 @@ export default function Dashboard() {
   };
 
   const getRiskScoreColor = (score: number) => {
+    if (score == 0) return "text-green-400"
     if (score >= 80) return "text-red-400";
     if (score >= 60) return "text-orange-400";
     if (score >= 40) return "text-yellow-400";
@@ -112,7 +113,7 @@ export default function Dashboard() {
     navigator.clipboard.writeText(text);
   };
 
-  // 🔽 Download Scan Report (JSON)
+  //  Download Scan Report (JSON)
   const downloadReport = () => {
     const data = activeScan;
     if (!data) return;

@@ -58,28 +58,31 @@ export default function Scanner() {
 
       // Normalize data for dashboard
       const formattedResults = {
-        totalFiles: uploadedFiles.length,
-        vulnerabilities: allResults.flatMap((scan: any) =>
-          scan.issues.map((issue: any, index: number) => ({
-            id: `${scan._id}-${index}`,
-            type: issue.type,
-            severity: issue.severity,
-            file: scan.file_name,
-            line: issue.line,
-            description: issue.message,
-            code: issue.code,
-            suggestion: "Follow secure coding practices",
-            fixedCode: "Refer official documentation"
-          }))
-        ),
-        summary: {
-          critical: allResults.flatMap(s => s.issues).filter(i => i.severity === "High").length,
-          high: allResults.flatMap(s => s.issues).length,
-          medium: 0,
-          low: 0,
-          riskScore: 80
-        }
-      };
+  totalFiles: uploadedFiles.length,
+  vulnerabilities: allResults.flatMap((scan: any) =>
+    (scan.issues || []).map((issue: any, index: number) => ({
+      id: `${scan._id}-${index}`,
+      type: issue.type,
+      severity: issue.severity,
+      file: scan.file_name,
+      line: issue.line,
+      description: issue.message,
+      code: issue.code,
+      suggestion: "Follow secure coding practices",
+      fixedCode: "Refer official documentation",
+    }))
+  ),
+  summary: {
+    critical: allResults
+      .flatMap((s) => s.issues || [])
+      .filter((i) => i.severity === "High").length,
+    high: allResults.flatMap((s) => s.issues || []).length,
+    medium: 0,
+    low: 0,
+    riskScore: 80,
+  },
+};
+
 
       setScanResults(formattedResults);
       navigate("/dashboard");

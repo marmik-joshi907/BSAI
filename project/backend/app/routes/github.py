@@ -1,3 +1,5 @@
+# Demo Repo to Check:-
+# https://github.com/pallets/flask
 import os
 import shutil
 import uuid
@@ -13,7 +15,7 @@ from app.database import scan_collection
 
 router = APIRouter()
 
-SUPPORTED_EXTENSIONS = (".py", ".js", ".ts", ".jsx", ".php", ".html")
+SUPPORTED_EXTENSIONS = (".py", ".js", ".ts", ".jsx", ".php", ".html",".tsx")
 
 class GitHubScanRequest(BaseModel):
     repo_url: str
