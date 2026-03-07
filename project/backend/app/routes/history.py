@@ -5,7 +5,7 @@ from app.database import scan_collection
 router = APIRouter()
 
 #  1. STATIC ROUTE FIRST
-@router.get("/api/scans/history")
+@router.get("/scans/history")
 def get_scan_history():
     scans = list(scan_collection.find().sort("scan_date", -1))
 
@@ -16,7 +16,7 @@ def get_scan_history():
 
 
 #  2. DYNAMIC ROUTE SECOND
-@router.get("/api/scans/{scan_id}")
+@router.get("/scans/{scan_id}")
 def get_scan_by_id(scan_id: str):
     if not ObjectId.is_valid(scan_id):
         raise HTTPException(status_code=400, detail="Invalid scan ID")

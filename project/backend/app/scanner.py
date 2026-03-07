@@ -32,7 +32,8 @@ def scan_code(code: str):
                 predicted_severity = predict_severity(
                     f"{rule['type']} {line}"
                 )
-
+                #  demo
+                print("ML severity:", predicted_severity)
                 issues.append({
                     "type": rule["type"],
                     "severity": predicted_severity,  # 🔥 ML USED
@@ -40,5 +41,6 @@ def scan_code(code: str):
                     "message": rule["message"],
                     "code": line.strip()
                 })
+    
 
     return issues
