@@ -4,10 +4,11 @@ import Header from './components/Header';
 import LandingPage from './pages/LandingPage';
 import Scanner from './pages/Scanner';
 import Dashboard from './pages/Dashboard';
+import CodeOptimizer from "./pages/CodeOptimizer";
 import { VulnerabilityProvider } from './context/VulnerabilityContext';
 
 function App() {
-  return ( 
+  return (
     <VulnerabilityProvider>
       <Router>
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -16,6 +17,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/scanner" element={<Scanner />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/optimizer" element={<CodeOptimizer />} />
           </Routes>
         </div>
       </Router>

@@ -1,4 +1,4 @@
-const BACKEND_URL = "http://localhost:8000"; // added-by-me (kush)
+const BACKEND_URL = "http://localhost:8000"; // for backend addition
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -58,37 +58,72 @@ export default function Scanner() {
 
       // Normalize data for dashboard
       const formattedResults = {
-        totalFiles: uploadedFiles.length,
-        vulnerabilities: allResults.flatMap((scan: any) =>
-          scan.issues.map((issue: any, index: number) => ({
-            id: `${scan._id}-${index}`,
-            type: issue.type,
-            severity: issue.severity,
-            file: scan.file_name,
-            line: issue.line,
-            description: issue.message,
-            code: issue.code,
-            suggestion: "Follow secure coding practices",
-            fixedCode: "Refer official documentation"
-          }))
-        ),
-        summary: {
-          critical: allResults.flatMap(s => s.issues).filter(i => i.severity === "High").length,
-          high: allResults.flatMap(s => s.issues).length,
-          medium: 0,
-          low: 0,
-          riskScore: 80
-        }
-      };
+  totalFiles: uploadedFiles.length,
+  vulnerabilities: allResults.flatMap((scan: any) =>
+    (scan.issues || []).map((issue: any, index: number) => ({
+      id: `${scan._id}-${index}`,
+      type: issue.type,
+      severity: issue.severity,
+      file: scan.file_name,
+      line: issue.line,
+      description: issue.message,
+      code: issue.code,
+      suggestion: "Follow secure coding practices",
+      fixedCode: "Refer official documentation",
+    }))
+  ),
+  summary: {
+    critical: allResults
+      .flatMap((s) => s.issues || [])
+      .filter((i) => i.severity === "High").length,
+    high: allResults.flatMap((s) => s.issues || []).length,
+    medium: 0,
+    low: 0,
+    riskScore: 80,
+  },
+};
+
 
       setScanResults(formattedResults);
       navigate("/dashboard");
     }
 
-    // -------- GITHUB MODE (placeholder) --------
-    if (scanMode === 'github') {
-      alert("GitHub scanning will be enabled in next phase");
-    }
+    // -------- GITHUB MODE (REAL IMPLEMENTATION) --------
+if (scanMode === "github") {
+  const response = await fetch(`${BACKEND_URL}/api/scan/github`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ repo_url: githubUrl }),
+  });
+
+  if (!response.ok) {
+    throw new Error("GitHub scan failed");
+  }
+
+  const result = await response.json();
+
+  // Normalize for Dashboard
+  const formattedResults = {
+    totalFiles: result.totalFiles || 0,
+    vulnerabilities: result.vulnerabilities.map((issue: any, index: number) => ({
+      id: `${index}`,
+      type: issue.type,
+      severity: issue.severity,
+      file: issue.file,
+      line: issue.line,
+      description: issue.message,
+      code: issue.code,
+      suggestion: "Follow secure coding practices",
+      fixedCode: "Refer official documentation"
+    })),
+    summary: result.summary,
+  };
+
+  setScanResults(formattedResults);
+  navigate("/dashboard");
+}
 
   } catch (error) {
     console.error(error);
