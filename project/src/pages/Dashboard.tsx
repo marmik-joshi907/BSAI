@@ -1,7 +1,7 @@
 // https://github.com/OWASP/WebGoat
 const BACKEND_URL = "http://localhost:8000";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   AlertTriangle,
   Shield,

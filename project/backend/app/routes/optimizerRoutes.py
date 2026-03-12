@@ -12,12 +12,10 @@ class OptimizeRequest(BaseModel):
 @router.post("/optimize")
 async def optimize_code(request: OptimizeRequest):
 
+    if not request.code:
+        raise HTTPException(status_code=400, detail="No code provided")
+
     try:
-        if not request.code:
-            raise HTTPException(status_code=400, detail="No code provided")
-
-        print(f"Received code optimization request for language: {request.language}")
-
         result = predict(request.code, request.language)
 
         return {
@@ -27,4 +25,4 @@ async def optimize_code(request: OptimizeRequest):
 
     except Exception as e:
         print("Optimization error:", e)
-        raise HTTPException(status_code=500, detail="Failed to process optimization request")
+        raise HTTPException(status_code=500, detail="Optimization failed")
