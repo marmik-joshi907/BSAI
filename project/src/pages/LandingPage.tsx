@@ -1,13 +1,8 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Shield, 
-  Code, 
-  AlertTriangle, 
-  CheckCircle, 
   ArrowRight, 
   Upload,
-  Github,
   Zap,
   Eye,
   BookOpen

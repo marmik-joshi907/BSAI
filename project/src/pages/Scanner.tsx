@@ -1,119 +1,157 @@
-const BACKEND_URL = "http://localhost:8000"; // added-by-me (kush)
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Upload, 
-  Github, 
-  FileText, 
-  Code, 
+const BACKEND_URL = "http://localhost:8000"; // for backend addition
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Upload,
+  Github,
+  FileText,
+  Code,
   AlertCircle,
   CheckCircle,
   Loader2,
-  X
-} from 'lucide-react';
-import { useVulnerability } from '../context/VulnerabilityContext';
+  X,
+} from "lucide-react";
+import { useVulnerability } from "../context/VulnerabilityContext";
 
 export default function Scanner() {
   const navigate = useNavigate();
   const { setScanResults } = useVulnerability();
   const [isScanning, setIsScanning] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [githubUrl, setGithubUrl] = useState('');
-  const [scanMode, setScanMode] = useState<'upload' | 'github'>('upload');
+  const [githubUrl, setGithubUrl] = useState("");
+  const [scanMode, setScanMode] = useState<"upload" | "github">("upload");
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    setUploadedFiles(prev => [...prev, ...files]);
+    setUploadedFiles((prev) => [...prev, ...files]);
   };
 
   const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   // updated by me (kush)
   const handleScan = async () => {
-  try {
-    setIsScanning(true);
+    try {
+      setIsScanning(true);
 
-    // -------- FILE UPLOAD MODE --------
-    if (scanMode === 'upload') {
-      const allResults = [];
+      // -------- FILE UPLOAD MODE --------
+      if (scanMode === "upload") {
+        const allResults = [];
 
-      for (const file of uploadedFiles) {
-        const formData = new FormData();
-        formData.append("file", file);
+        for (const file of uploadedFiles) {
+          const formData = new FormData();
+          formData.append("file", file);
 
-        const response = await fetch(`${BACKEND_URL}/api/scan/upload`, {
+          const response = await fetch(`${BACKEND_URL}/api/scan/upload`, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error("Scan failed");
+          }
+
+          const result = await response.json();
+          allResults.push(result);
+        }
+
+        // Normalize data for dashboard
+        const formattedResults = {
+          totalFiles: uploadedFiles.length,
+          vulnerabilities: allResults.flatMap((scan: any) =>
+            (scan.issues || []).map((issue: any, index: number) => ({
+              id: `${scan._id}-${index}`,
+              type: issue.type,
+              severity: issue.severity,
+              file: scan.file_name,
+              line: issue.line,
+              description: issue.message,
+              code: issue.code,
+              suggestion: "Follow secure coding practices",
+              fixedCode: "Refer official documentation",
+            })),
+          ),
+          summary: {
+            critical: allResults
+              .flatMap((s) => s.issues || [])
+              .filter((i) => i.severity === "High").length,
+            high: allResults.flatMap((s) => s.issues || []).length,
+            medium: 0,
+            low: 0,
+            riskScore: 80,
+          },
+        };
+
+        setScanResults(formattedResults);
+        navigate("/dashboard");
+      }
+
+      // -------- GITHUB MODE (REAL IMPLEMENTATION) --------
+      if (scanMode === "github") {
+        const response = await fetch(`${BACKEND_URL}/api/scan/github`, {
           method: "POST",
-          body: formData,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ repo_url: githubUrl }),
         });
 
         if (!response.ok) {
-          throw new Error("Scan failed");
+          throw new Error("GitHub scan failed");
         }
 
         const result = await response.json();
-        allResults.push(result);
+
+        // Normalize for Dashboard
+        const formattedResults = {
+          totalFiles: result.totalFiles || 0,
+          vulnerabilities: result.vulnerabilities.map(
+            (issue: any, index: number) => ({
+              id: `${index}`,
+              type: issue.type,
+              severity: issue.severity,
+              file: issue.file,
+              line: issue.line,
+              description: issue.message,
+              code: issue.code,
+              suggestion: "Follow secure coding practices",
+              fixedCode: "Refer official documentation",
+            }),
+          ),
+          summary: result.summary,
+        };
+
+        setScanResults(formattedResults);
+        navigate("/dashboard");
       }
-
-      // Normalize data for dashboard
-      const formattedResults = {
-        totalFiles: uploadedFiles.length,
-        vulnerabilities: allResults.flatMap((scan: any) =>
-          scan.issues.map((issue: any, index: number) => ({
-            id: `${scan._id}-${index}`,
-            type: issue.type,
-            severity: issue.severity,
-            file: scan.file_name,
-            line: issue.line,
-            description: issue.message,
-            code: issue.code,
-            suggestion: "Follow secure coding practices",
-            fixedCode: "Refer official documentation"
-          }))
-        ),
-        summary: {
-          critical: allResults.flatMap(s => s.issues).filter(i => i.severity === "High").length,
-          high: allResults.flatMap(s => s.issues).length,
-          medium: 0,
-          low: 0,
-          riskScore: 80
-        }
-      };
-
-      setScanResults(formattedResults);
-      navigate("/dashboard");
+    } catch (error) {
+      console.error(error);
+      alert("Error during scanning");
+    } finally {
+      setIsScanning(false);
     }
-
-    // -------- GITHUB MODE (placeholder) --------
-    if (scanMode === 'github') {
-      alert("GitHub scanning will be enabled in next phase");
-    }
-
-  } catch (error) {
-    console.error(error);
-    alert("Error during scanning");
-  } finally {
-    setIsScanning(false);
-  }
-};
+  };
 
   const supportedFormats = [
-    { ext: '.html', icon: <FileText className="h-4 w-4" />, name: 'HTML' },
-    { ext: '.js', icon: <Code className="h-4 w-4" />, name: 'JavaScript' },
-    { ext: '.php', icon: <Code className="h-4 w-4" />, name: 'PHP' },
-    { ext: '.py', icon: <Code className="h-4 w-4" />, name: 'Python' },
-    { ext: '.jsx', icon: <Code className="h-4 w-4" />, name: 'React' },
-    { ext: '.ts', icon: <Code className="h-4 w-4" />, name: 'TypeScript' }
+    { ext: ".html", icon: <FileText className="h-4 w-4" />, name: "HTML" },
+    { ext: ".js", icon: <Code className="h-4 w-4" />, name: "JavaScript" },
+    { ext: ".php", icon: <Code className="h-4 w-4" />, name: "PHP" },
+    { ext: ".py", icon: <Code className="h-4 w-4" />, name: "Python" },
+    { ext: ".jsx", icon: <Code className="h-4 w-4" />, name: "React" },
+    { ext: ".ts", icon: <Code className="h-4 w-4" />, name: "TypeScript" },
   ];
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4">Security Scanner</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">
+            Security Scanner
+          </h1>
           <p className="text-lg text-gray-400">
-            Upload your code files or connect a GitHub repository to scan for vulnerabilities
+            Upload your code files or connect a GitHub repository to scan for
+            vulnerabilities
           </p>
         </div>
 
@@ -121,22 +159,22 @@ export default function Scanner() {
         <div className="flex justify-center mb-8">
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-1 border border-white/20">
             <button
-              onClick={() => setScanMode('upload')}
+              onClick={() => setScanMode("upload")}
               className={`px-6 py-3 rounded-md font-medium transition-all ${
-                scanMode === 'upload'
-                  ? 'bg-orange-500 text-white shadow-lg'
-                  : 'text-gray-300 hover:text-white'
+                scanMode === "upload"
+                  ? "bg-orange-500 text-white shadow-lg"
+                  : "text-gray-300 hover:text-white"
               }`}
             >
               <Upload className="h-4 w-4 inline mr-2" />
               Upload Files
             </button>
             <button
-              onClick={() => setScanMode('github')}
+              onClick={() => setScanMode("github")}
               className={`px-6 py-3 rounded-md font-medium transition-all ${
-                scanMode === 'github'
-                  ? 'bg-orange-500 text-white shadow-lg'
-                  : 'text-gray-300 hover:text-white'
+                scanMode === "github"
+                  ? "bg-orange-500 text-white shadow-lg"
+                  : "text-gray-300 hover:text-white"
               }`}
             >
               <Github className="h-4 w-4 inline mr-2" />
@@ -145,12 +183,14 @@ export default function Scanner() {
           </div>
         </div>
 
-        {scanMode === 'upload' ? (
+        {scanMode === "upload" ? (
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20 mb-8">
             <div className="text-center">
               <div className="border-2 border-dashed border-gray-400 rounded-lg p-12 hover:border-orange-400 transition-colors">
                 <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">Upload Your Code Files</h3>
+                <h3 className="text-lg font-medium text-white mb-2">
+                  Upload Your Code Files
+                </h3>
                 <p className="text-gray-400 mb-4">
                   Drag and drop files here, or click to browse
                 </p>
@@ -190,7 +230,9 @@ export default function Scanner() {
             {/* Uploaded Files */}
             {uploadedFiles.length > 0 && (
               <div className="mt-6">
-                <h4 className="text-sm font-medium text-white mb-3">Uploaded Files:</h4>
+                <h4 className="text-sm font-medium text-white mb-3">
+                  Uploaded Files:
+                </h4>
                 <div className="space-y-2">
                   {uploadedFiles.map((file, index) => (
                     <div
@@ -220,7 +262,9 @@ export default function Scanner() {
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20 mb-8">
             <div className="text-center mb-6">
               <Github className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">Connect GitHub Repository</h3>
+              <h3 className="text-lg font-medium text-white mb-2">
+                Connect GitHub Repository
+              </h3>
               <p className="text-gray-400">
                 Enter the URL of your GitHub repository to scan
               </p>
@@ -242,9 +286,9 @@ export default function Scanner() {
           <button
             onClick={handleScan}
             disabled={
-              isScanning || 
-              (scanMode === 'upload' && uploadedFiles.length === 0) ||
-              (scanMode === 'github' && !githubUrl.trim())
+              isScanning ||
+              (scanMode === "upload" && uploadedFiles.length === 0) ||
+              (scanMode === "github" && !githubUrl.trim())
             }
             className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
           >
@@ -267,10 +311,13 @@ export default function Scanner() {
           <div className="flex items-start space-x-3">
             <CheckCircle className="h-6 w-6 text-blue-400 mt-0.5 flex-shrink-0" />
             <div>
-              <h4 className="text-white font-medium mb-2">Privacy & Security</h4>
+              <h4 className="text-white font-medium mb-2">
+                Privacy & Security
+              </h4>
               <p className="text-blue-200 text-sm">
-                Your code is processed securely and is never stored on our servers. 
-                All analysis happens in real-time and results are only visible to you.
+                Your code is processed securely and is never stored on our
+                servers. All analysis happens in real-time and results are only
+                visible to you.
               </p>
             </div>
           </div>

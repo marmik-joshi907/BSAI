@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Shield, Github, Menu, X } from 'lucide-react';
 import { useState } from 'react';
@@ -51,6 +50,17 @@ export default function Header() {
               }`}
             >
               Dashboard
+            </Link>
+
+            <Link
+              to="/optimizer"
+              className={`text-sm font-medium transition-colors ${
+                isActive('/optimizer') 
+                  ? 'text-orange-400' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              Optimizer
             </Link>
 
             <a
