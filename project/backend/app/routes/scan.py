@@ -19,7 +19,7 @@ async def upload_and_scan(file: UploadFile = File(...)):
 
     issues = scan_code(code)
 
-    scan_result = build_scan_response(file.filename, issues)
+    scan_result = build_scan_response(filename, issues)
     result = scan_collection.insert_one(scan_result)
 
     scan_result["_id"] = str(result.inserted_id)

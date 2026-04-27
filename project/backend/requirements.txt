@@ -6,3 +6,4 @@ GitPython
 groq
 scikit-learn 
 joblib
+radon

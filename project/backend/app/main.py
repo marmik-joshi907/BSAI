@@ -7,9 +7,6 @@ from app.routes.report import router as report_router
 from app.routes.github import router as github_router
 from app.routes.optimizerRoutes import router as optimizer_router
 
-
-
-
 app = FastAPI(title="BugShield AI Backend")
 
 app.add_middleware(
