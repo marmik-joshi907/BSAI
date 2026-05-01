@@ -184,6 +184,9 @@ export default function LandingPage() {
           <p className="text-gray-400">
             Making web development more secure, one scan at a time.
           </p>
+          <p className="text-gray-600 text-xs mt-3 opacity-80 hover:opacity-120 transition-opacity duration-300">
+            Backend designed & maintained by Kush Bhavsar
+          </p>
         </div>
       </footer>
     </div>
